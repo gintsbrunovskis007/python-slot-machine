@@ -143,13 +143,21 @@ def get_bet():
 
 def spin(balance, lines, bet, slots):
 
-    while True:
-        total_bet = bet * lines
+    # while True:
 
-        if total_bet > balance:
-           print(f"Not enough funds. Current balance: ${balance}") 
-        else:
-            break
+        #total_bet = bet * lines
+
+        # the reason the app cashes when we have not enough funds is because,
+        # the game runs at x fps about 60 IDK, to it prints 60 times a second to the
+        # terminal, which results in a crash.
+        # let's just comment this out, and check it when we click the spin button
+
+        #if total_bet > balance:
+        #   print(f"Not enough funds. Current balance: ${balance}")
+        #else:
+        #    break
+
+    total_bet = bet * lines
 
     print(f"You are betting ${bet} on {lines} lines. Total bet is ${total_bet}")
     # slots = get_slot_machine_spin(ROWS, COLS, symbol_count)
@@ -211,13 +219,22 @@ def screen():
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if spin_button.collidepoint(event.pos):
-                    slots = get_slot_machine_spin(ROWS, COLS, symbol_count)
-                    winnings, winning_lines = check_winnings(slots, selected_line_box_value, current_bet, symbol_value)
-                    current_balance += spin(current_balance, selected_line_box_value, current_bet, slots)
+
                     if winnings == 0:
                         mixer.music.load("gunshot.mp3")
                         mixer.music.set_volume(2)
                         mixer.music.play()
+                    if current_bet > current_balance:
+                        info_message = "you dont have enough money to bet"
+                        mixer.music.load("no_money.mp3")
+                        mixer.music.set_volume(2)
+                        mixer.music.play()
+                    else:
+                        slots = get_slot_machine_spin(ROWS, COLS, symbol_count)
+                        winnings, winning_lines = check_winnings(slots, selected_line_box_value, current_bet, symbol_value)
+                        current_balance += spin(current_balance, selected_line_box_value, current_bet, slots)
+
+
                 if bet_up_button.collidepoint(event.pos):
                     if current_bet >= 100:
                         info_message = "max bet is 100"
@@ -266,8 +283,6 @@ def screen():
         # printed_slot_grid_box = pygame.Rect(100,100, 1000, 1000)
 
         info_box = pygame.Rect(50, 600, 300, 80)
-
-
 
         symbol_font = pygame.font.SysFont("Segoe UI Emoji", 64)
         for col_index, column in enumerate(slots):
