@@ -202,6 +202,8 @@ def screen():
     winnings = 0
     winning_lines = []
 
+    info_message = ""
+
     while running:
 
         for event in pygame.event.get():
@@ -217,9 +219,20 @@ def screen():
                         mixer.music.set_volume(2)
                         mixer.music.play()
                 if bet_up_button.collidepoint(event.pos):
-                    current_bet += 10
+                    if current_bet >= 100:
+                        info_message = "max bet is 100"
+                        print("max bet is 100")
+                    else:
+                        current_bet += 10
+                        info_message = ""
+
                 if bet_down_button.collidepoint(event.pos):
-                    current_bet -= 10
+                    if current_bet > 10:
+                        current_bet -= 10
+                    else:
+                        info_message = "minimum bet is 10"
+                        print("you cannot bet under 0 or negative")
+                        break
                 if line_1.collidepoint(event.pos):
                     selected_line_box_value = 1
                 elif line_2.collidepoint(event.pos):
@@ -251,6 +264,8 @@ def screen():
         won_amount_box = pygame.Rect(50, 20, 300, 55)
 
         # printed_slot_grid_box = pygame.Rect(100,100, 1000, 1000)
+
+        info_box = pygame.Rect(50, 600, 300, 80)
 
 
 
@@ -317,6 +332,11 @@ def screen():
                 font_won_on_line_box = pygame.font.SysFont("Arial", 36)
                 won_on_line_text = font_won_on_line_box.render(f"Winning Lines: ${winning_lines}", True, "white")
                 screen.blit(won_on_line_text, (50, 100))
+
+                pygame.draw.rect(screen, "white", info_box)
+                font_info_box = pygame.font.SysFont("Arial", 36)
+                info_box_text = font_info_box.render(info_message, True, "black")
+                screen.blit(info_box_text, (50, 600))
 
                 # pygame.draw.rect(screen, "black", printed_slot_grid_box)
                 # font_slot_grid_box = pygame.font.SysFont("Segoe UI Emoji", 36)
