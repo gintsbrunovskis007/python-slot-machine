@@ -1,5 +1,6 @@
 import random
-# import pygame
+import pygame
+from pygame import mixer
 
 MAX_LINES = 3
 MAX_BET = 100
@@ -8,7 +9,6 @@ MIN_BET = 1
 ROWS = 3
 COLS = 3
 
-# How many times each symbol appears in the pool.
 symbol_count = {
     "🍒": 2,
     "🍇": 4,
@@ -16,7 +16,6 @@ symbol_count = {
     "🍌": 8
 }
 
-# Payout multiplier per symbol.
 symbol_value = {
     "🍒": 5,
     "🍇": 4,
@@ -24,72 +23,29 @@ symbol_value = {
     "🍌": 2
 }
 
-# Col 0   Col 1   Col 2
-# Row 0:    🍒  |   🍒  |   🍒    ← Line 1 (all match = WIN)
-# Row 1:    🍇  |   🍊  |   🍇    ← Line 2 (no match = LOSE)
-# Row 2:    🍌  |   🍌  |   🍊    ← Line 3 (not betting on this)
-
-
-# columns = [
-#     ["🍒", "🍇", "🍌"],   # column 0 (left)
-#     ["🍒", "🍊", "🍌"],   # column 1 (middle)
-#     ["🍒", "🍇", "🍌"]    # column 2 (right)
-# ]
-# lines = 2 | checking row 0 and row 1 only.
-# bet = 10 | $10 per line
-# values = {"🍒": 5, "🍇": 4, "🍊": 3, "🍌": 2}
 def check_winnings(columns, lines, bet, values):
     winnings = 0
-
-    # Stores the winning lines, for example won on 1,2,3.
-    # The reason it is not 0,1,2 because nobody counts from 0, so line + 1.
     winning_lines = []
 
-    # Line is basically just saying "which row am I currently checking?"
-    # If line = 3 then we check line's 0,1,2.
     for line in range(lines):
 
-        # columns[0] is the left column (vertical strip):
-        # 🍒   ← columns[0][0]
-        # 🍇   ← columns[0][1]
-        # 🍌   ← columns[0][2]
-        # columns[0][line] is grabbing the symbol from the left column at the row we are currently checking.
         symbol = columns[0][line]
-        # If line = 0: symbol = columns[0][0]  →  🍒, etc.
 
-        # We are currently on row 0 (line = 0) and we already grabbed our reference symbol: symbol = 🍒 from the left column.
-
-        # Slot machine look like:
-        # 🍒 | 🍒 | 🍒   ← We are checking this row.
-        # 🍇 | 🍊 | 🍇
-        # 🍌 | 🍌 | 🍌
-
-        # This loops through each column one by one:
-        # first loop:  column = ["🍒", "🍇", "🍌"]  (left column)
-        # second loop: column = ["🍒", "🍊", "🍌"]  (middle column)
-        # third loop:  column = ["🍒", "🍇", "🍌"]  (right column)
         for column in columns:
 
-            # Grabs the symbol from the current column at row 0:
-            # first loop:  symbol_to_check = 🍒
-            # second loop: symbol_to_check = 🍒
-            # third loop:  symbol_to_check = 🍒
+
             symbol_to_check = column[line]
 
-            # Compares reference symbol against current symbol:
-            # 🍒 != 🍒? → No  → keep going ✅
-            # 🍒 != 🍒? → No  → keep going ✅
-            # 🍒 != 🍒? → No  → keep going ✅
 
-            # Losing row 1:
-            # symbol = 🍇  (reference from left column)
-            # 🍇 != 🍇? → No  → keep going ✅
-            # 🍇 != 🍊? → YES → BREAK! ❌
             if symbol != symbol_to_check:
                 break 
         else:
             winnings += values[symbol] * bet
             winning_lines.append(line + 1)
+            mixer.init()
+            mixer.music.load("jackpot.mp3")
+            mixer.music.set_volume(2)
+            mixer.music.play()
 
 
     
@@ -98,72 +54,34 @@ def check_winnings(columns, lines, bet, values):
 
 def get_slot_machine_spin(rows, cols, symbols):
 
-    # Stores the pool of symbols before we randomly pick.
-    # all_symbols = [
-    #     "🍒", "🍒",  # 2 times
-    #     "🍇", "🍇", "🍇", "🍇",  # 4 times
-    #     "🍊", "🍊", "🍊", "🍊", "🍊", "🍊",  # 6 times
-    #     "🍌", "🍌", "🍌", "🍌", "🍌", "🍌", "🍌", "🍌"  # 8 times
-    # ]
     all_symbols = []
 
-    # Loops through the symbols dictionary and grabs both the key and value at the same time.
     for symbol, symbol_count in symbols.items():
 
-        # _ is often used as a throwaway variable name in Python loops when the loop variable itself is not needed.
         for _ in range(symbol_count):
 
-            # So for 🍒 where symbol_count = 2: repeat 2 times → append "🍒" → append "🍒".
-            # For 🍌 where symbol_count = 8: repeat 8 times → append "🍌" eight times.
+
             all_symbols.append(symbol)
 
-    # Store each column with the randomly selected symbols on each row.
     columns = []
 
     for _ in range(cols):
 
-        # Store the symbols for the current column being built.
         column = []
 
-        # [:] creates a copy of the all_symbols array.
-        # Reason, so every column always starts with the full bag of symbols.
+
         current_symbols = all_symbols[:]
 
-        # Loop 3 times for each row in the current column.
-        # first loop: picking symbol for row 0 col 1.
-        # second loop: picking symbol for row 1 col 1.
-        # third loop: picking symbol for row 2 col 1.
+
         for _ in range(rows):
 
-            # Random pick of a symbol
             value = random.choice(current_symbols)
 
-            # Removes it from the bag so it can't be picked again in this column:
             current_symbols.remove(value)
 
-            # Add the symbol to the current column
             column.append(value)
 
-            # column = ["🍇", "🍒", "🍌"]  ✅
 
-            # So at this point we have two nested loops:
-            #   for _ in range(cols):  # repeats 3 times (columns)
-            #       for _ in range(rows):  # repeats 3 times (rows)
-
-            # building column 0:
-            # → pick symbol for row 0
-            # → pick symbol for row 1
-            # → pick symbol for row 2
-            #
-            # building column 1:
-            # → pick symbol for row 0
-            # → pick symbol for row 1
-            # → pick symbol for row 2
-            #
-            # building column 2:
-            # → pick symbol for row 0
-            # → pick symbol for row 1
-            # → pick symbol for row 2
 
         columns.append(column)
 
@@ -171,25 +89,13 @@ def get_slot_machine_spin(rows, cols, symbols):
 
 def print_slot_machine(columns):
 
-    # columns[0] is the left column which has 3 symbols, so len(columns[0] is 3.
     for row in range(len(columns[0])):
-
-        # enumerate() give you the index number and the value at the same time.
-        # i = 0, column = ["🍒", "🍇", "🍌"]  # left column
-        # i = 1, column = ["🍒", "🍊", "🍌"]  # middle column
-        # i = 2, column = ["🍒", "🍇", "🍊"]  # right column
-
         for i, column in enumerate(columns):
-
-            # len(columns) - 1 is 3 - 1 = 2, which is the index of the last column.
-            # If I am NOT the last column → print with " | " after.
-            # If I AM the last column     → print with nothing after.
             if i != len(columns) - 1:
                 print(column[row], end=" | ")
             else:
                 print(column[row], end="")
 
-        # Row is complete, go to the next line.
         print()
 
 
@@ -212,8 +118,6 @@ def get_number_of_lines():
         lines = input("How many lines do you want to play (1-"+ str(MAX_LINES) + ")? ")
         if lines.isdigit():
             lines = int(lines)
-
-            # if lines >= 1 and lines <= MAX_LINES:
             if 1 <= lines <= MAX_LINES:
                 break
             else: 
@@ -228,8 +132,6 @@ def get_bet():
         amount = input("How much do you want to bet on each line? $ ")
         if amount.isdigit():
             amount = int(amount)
-
-            # if amount >= MIN_BET and amount <= MAX_BET:
             if MIN_BET <= amount <= MAX_BET:
                 break
             else: 
@@ -239,12 +141,9 @@ def get_bet():
     
     return amount
 
-def spin(balance):
-    lines = get_number_of_lines()
+def spin(balance, lines, bet, slots):
 
-    # while (TRUE) loop, keeps asking the bet until they bet something they can actually afford.
     while True:
-        bet = get_bet()
         total_bet = bet * lines
 
         if total_bet > balance:
@@ -252,20 +151,13 @@ def spin(balance):
         else:
             break
 
-
     print(f"You are betting ${bet} on {lines} lines. Total bet is ${total_bet}")
-
-    slots = get_slot_machine_spin(ROWS, COLS, symbol_count)
+    # slots = get_slot_machine_spin(ROWS, COLS, symbol_count)
     print_slot_machine(slots)
-
-    # unpacking. calling the function, we catch both values.
-    # first value  → goes into winnings.
-    # second value → goes into winning_lines.
     winnings, winning_lines = check_winnings(slots, lines, bet, symbol_value)
     print(f"You won ${winnings}!")
     print(f"You won on lines: ", *winning_lines)
 
-    # returns the net change to the player's balance.
     return winnings - total_bet
 
 def main():
@@ -276,29 +168,173 @@ def main():
         if answer == "q":
             break
 
-        # call spin(balance) which runs the entire game round.
-        # takes whatever spin() returned and adds it to balance.
         balance += spin(balance)
 
     print(f"you left with ${balance}")
 
-# def screen():
-#     pygame.init()
-#     screen = pygame.display.set_mode((1280, 720))
-#     clock = pygame.time.Clock()
-#     running = True
-#
-#     while running:
-#         for event in pygame.event.get():
-#             if event.type == pygame.QUIT:
-#                 running = False
-#
-#         screen.fill("red")
-#
-#         pygame.display.flip()
-#
-#         clock.tick(60)
-#     pygame.quit()
+def screen():
+    pygame.init()
+    screen = pygame.display.set_mode((1280, 720))
+    clock = pygame.time.Clock()
+    running = True
 
-main()
-# screen()
+    slots = get_slot_machine_spin(ROWS, COLS, symbol_count)
+    # printed_slot_grid = print_slot_machine(slots);
+
+    current_bet = 10
+    current_balance = 1000
+
+    line_1_value = 1
+    line_2_value = 2
+    line_3_value = 3
+
+    # this won't work and throw will throw an error
+    # selected_line_box_value = None
+
+    selected_line_box_value = 1
+
+    # 1. check events
+    # 2. clear screen
+    # 3. draw symbols
+    # 4. draw buttons
+    # 5. update screen
+
+    winnings = 0
+    winning_lines = []
+
+    while running:
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if spin_button.collidepoint(event.pos):
+                    slots = get_slot_machine_spin(ROWS, COLS, symbol_count)
+                    winnings, winning_lines = check_winnings(slots, selected_line_box_value, current_bet, symbol_value)
+                    current_balance += spin(current_balance, selected_line_box_value, current_bet, slots)
+                    if winnings == 0:
+                        mixer.music.load("gunshot.mp3")
+                        mixer.music.set_volume(2)
+                        mixer.music.play()
+                if bet_up_button.collidepoint(event.pos):
+                    current_bet += 10
+                if bet_down_button.collidepoint(event.pos):
+                    current_bet -= 10
+                if line_1.collidepoint(event.pos):
+                    selected_line_box_value = 1
+                elif line_2.collidepoint(event.pos):
+                    selected_line_box_value = 2
+                elif line_3.collidepoint(event.pos):
+                    selected_line_box_value = 3
+
+        screen.fill("red")
+
+        text_font = pygame.font.SysFont("Arial", 64)
+        text = text_font.render("Slot Machine", True, "white")
+        screen.blit(text, (500, 100))
+
+        spin_button = pygame.Rect(840, 600, 200, 60)
+        bet_box = pygame.Rect(840, 400, 300, 60)
+
+        balance_box = pygame.Rect(100, 200, 100, 50)
+
+        bet_up_button = pygame.Rect(840, 115, 200, 60)
+        bet_down_button = pygame.Rect(840, 215, 300, 60)
+
+        line_1 = pygame.Rect(100,300, 50, 50)
+        line_2 = pygame.Rect(100,400, 50, 50)
+        line_3 = pygame.Rect(100,500, 50, 50)
+
+        line_value_box = pygame.Rect(900, 30, 70,70)
+
+        won_on_line_box = pygame.Rect(50, 100, 300, 55)
+        won_amount_box = pygame.Rect(50, 20, 300, 55)
+
+        # printed_slot_grid_box = pygame.Rect(100,100, 1000, 1000)
+
+
+
+        symbol_font = pygame.font.SysFont("Segoe UI Emoji", 64)
+        for col_index, column in enumerate(slots):
+            for row_index, symbol in enumerate(column):
+                text = symbol_font.render(symbol, True, "white");
+                x = 400 + col_index * 150
+                y = 250 + row_index * 150
+
+                screen.blit(text, (x, y))
+
+                pygame.draw.rect(screen, "green", spin_button)
+                font_button = pygame.font.SysFont("Arial", 36)
+                button_text = font_button.render("SPIN", True, "white")
+                screen.blit(button_text, (890, 615))
+
+                pygame.draw.rect(screen, "blue", bet_box)
+                font_bet_box = pygame.font.SysFont("Arial", 36)
+                bet_box_text = font_bet_box.render(str(current_bet), True, "white")
+                screen.blit(bet_box_text, (890, 415))
+
+                pygame.draw.rect(screen, "yellow", bet_up_button)
+                font_bet_up_button = pygame.font.SysFont("Arial", 36)
+                bet_up_button_text = font_bet_up_button.render("UP", True, "black")
+                screen.blit(bet_up_button_text, (890, 115))
+
+                pygame.draw.rect(screen, "yellow", bet_down_button)
+                font_bet_down_button = pygame.font.SysFont("Arial", 36)
+                bet_down_button_text = font_bet_down_button.render("DOWN", True, "black")
+                screen.blit(bet_down_button_text, (890, 215))
+
+                pygame.draw.rect(screen, "aqua", balance_box)
+                font_balance_box = pygame.font.SysFont("Arial", 36)
+                balance_box_text = font_balance_box.render(str(current_balance), True, "black")
+                screen.blit(balance_box_text, (100, 200))
+
+                pygame.draw.rect(screen, "purple", line_1)
+                font_line_1 = pygame.font.SysFont("Arial", 36)
+                line_1_text = font_line_1.render(str(line_1_value), True, "white")
+                screen.blit(line_1_text, (100, 300))
+
+                pygame.draw.rect(screen, "purple", line_2)
+                font_line_2 = pygame.font.SysFont("Arial", 36)
+                line_2_text = font_line_2.render(str(line_2_value), True, "white")
+                screen.blit(line_2_text, (100, 400))
+
+                pygame.draw.rect(screen, "purple", line_3)
+                font_line_3 = pygame.font.SysFont("Arial", 36)
+                line_3_text = font_line_3.render(str(line_3_value), True, "white")
+                screen.blit(line_3_text, (100, 500))
+
+                pygame.draw.rect(screen, "purple", line_value_box)
+                font_line_value_box = pygame.font.SysFont("Arial", 36)
+                line_value_box_text = font_line_value_box.render(str(selected_line_box_value), True, "white")
+                screen.blit(line_value_box_text, (900, 50))
+
+                pygame.draw.rect(screen, "brown", won_amount_box)
+                font_won_amount_box = pygame.font.SysFont("Arial", 36)
+                won_amount_box_text = font_won_amount_box.render(f"Won: ${winnings}", True, "white")
+                screen.blit(won_amount_box_text, (50, 20))
+
+                pygame.draw.rect(screen, "brown", won_on_line_box)
+                font_won_on_line_box = pygame.font.SysFont("Arial", 36)
+                won_on_line_text = font_won_on_line_box.render(f"Winning Lines: ${winning_lines}", True, "white")
+                screen.blit(won_on_line_text, (50, 100))
+
+                # pygame.draw.rect(screen, "black", printed_slot_grid_box)
+                # font_slot_grid_box = pygame.font.SysFont("Segoe UI Emoji", 36)
+                # slot_grid_box_value = font_slot_grid_box.render(printed_slot_grid, True, "white")
+                # screen.blit(slot_grid_box_value, (1000, 1000))
+
+                # this shit was the reason the GUI and CLI dont match
+                # if event.type == pygame.MOUSEBUTTONDOWN:
+                #     if spin_button.collidepoint(event.pos):
+                #         slots = get_slot_machine_spin(ROWS, COLS, symbol_count)
+
+                # check_winnings(slots, selected_line_box_value, current_bet, symbol_value)
+                # current_balance += spin(current_balance, selected_line_box_value, current_bet)
+
+        pygame.display.flip()
+
+        clock.tick(60)
+    pygame.quit()
+
+# main()
+screen()
