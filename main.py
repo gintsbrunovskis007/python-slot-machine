@@ -10,17 +10,17 @@ ROWS = 3
 COLS = 3
 
 symbol_count = {
-    "🍒": 2,
+    "🥝": 2,
     "🍇": 4,
     "🍊": 6,
-    "🍌": 8
+    "🍉": 8
 }
 
 symbol_value = {
-    "🍒": 5,
+    "🥝": 5,
     "🍇": 4,
     "🍊": 3,
-    "🍌": 2
+    "🍉": 2
 }
 
 def check_winnings(columns, lines, bet, values):
@@ -28,15 +28,9 @@ def check_winnings(columns, lines, bet, values):
     winning_lines = []
 
     for line in range(lines):
-
         symbol = columns[0][line]
-
         for column in columns:
-
-
             symbol_to_check = column[line]
-
-
             if symbol != symbol_to_check:
                 break 
         else:
@@ -46,42 +40,26 @@ def check_winnings(columns, lines, bet, values):
             mixer.music.load("jackpot.mp3")
             mixer.music.set_volume(2)
             mixer.music.play()
-
-
-    
     return winnings, winning_lines
 
 
 def get_slot_machine_spin(rows, cols, symbols):
-
     all_symbols = []
 
     for symbol, symbol_count in symbols.items():
-
         for _ in range(symbol_count):
-
-
             all_symbols.append(symbol)
 
     columns = []
 
     for _ in range(cols):
-
         column = []
-
-
         current_symbols = all_symbols[:]
 
-
         for _ in range(rows):
-
             value = random.choice(current_symbols)
-
             current_symbols.remove(value)
-
             column.append(value)
-
-
 
         columns.append(column)
 
@@ -212,7 +190,23 @@ def screen():
 
     info_message = ""
 
+    kiwi_img = pygame.image.load("symbols/kiwi.png")
+    grape_img = pygame.image.load("symbols/grapes.png")
+    orange_img = pygame.image.load("symbols/orange.png")
+    watermelon_img = pygame.image.load("symbols/watermelon.png")
+
+    symbol_images = {
+        "🥝": kiwi_img,
+        "🍇": grape_img,
+        "🍊": orange_img,
+        "🍉": watermelon_img
+    }
+
+    # total_bet = current_bet * selected_line_box_value;
+
     while running:
+
+        total_bet = current_bet * selected_line_box_value;
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -229,6 +223,10 @@ def screen():
                         mixer.music.load("no_money.mp3")
                         mixer.music.set_volume(2)
                         mixer.music.play()
+                    if total_bet > current_balance:
+                    # if current_bet * selected_line_box_value > current_balance:
+                        info_message = "you don't have enough money to bet, sorry!"
+                        # print(total_bet)
                     else:
                         slots = get_slot_machine_spin(ROWS, COLS, symbol_count)
                         winnings, winning_lines = check_winnings(slots, selected_line_box_value, current_bet, symbol_value)
@@ -259,6 +257,12 @@ def screen():
 
         screen.fill("red")
 
+        size = (50, 50)
+        kiwi_img = pygame.transform.scale(kiwi_img, size)
+        grape_img = pygame.transform.scale(grape_img, size)
+        orange_img = pygame.transform.scale(orange_img, size)
+        watermelon_img = pygame.transform.scale(watermelon_img, size)
+
         text_font = pygame.font.SysFont("Arial", 64)
         text = text_font.render("Slot Machine", True, "white")
         screen.blit(text, (500, 100))
@@ -287,11 +291,10 @@ def screen():
         symbol_font = pygame.font.SysFont("Segoe UI Emoji", 64)
         for col_index, column in enumerate(slots):
             for row_index, symbol in enumerate(column):
-                text = symbol_font.render(symbol, True, "white");
+                img = symbol_images[symbol]
                 x = 400 + col_index * 150
                 y = 250 + row_index * 150
-
-                screen.blit(text, (x, y))
+                screen.blit(img, (x, y))
 
                 pygame.draw.rect(screen, "green", spin_button)
                 font_button = pygame.font.SysFont("Arial", 36)
